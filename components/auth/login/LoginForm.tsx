@@ -5,11 +5,7 @@ import { Loader2, Lock, Mail } from "lucide-react";
 import React, { SubmitEventHandler, useState } from "react";
 // import { login, signup } from "./actions";
 
-interface LoginFormProps {
-  // No se pasan props a este componente
-}
-
-const LoginForm: React.FC<LoginFormProps> = () => {
+const LoginForm = () => {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<{
     errorStatus: number | undefined;
@@ -20,12 +16,17 @@ const LoginForm: React.FC<LoginFormProps> = () => {
   const handleSubmit = async (e: FormData) => {
     console.log(e);
     setIsPending(true);
-    const { error, message } = await login(e);
-
-    if (error) {
-      setError({ errorStatus: error, message, state: true });
+    try {
+      await login(e);
+    } catch (err: any) {
+      setError({
+        errorStatus: err?.status ?? 0,
+        message: err?.message ?? "Error al iniciar sesión",
+        state: true,
+      });
+    } finally {
+      setIsPending(false);
     }
-    setIsPending(false);
   };
 
   return (

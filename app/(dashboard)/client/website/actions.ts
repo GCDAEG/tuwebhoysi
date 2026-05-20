@@ -23,6 +23,6 @@ export async function getClientWebConfig() {
 
   return {
     slug: data.username,
-    business_name: data.name
+    business_name: data.full_name
   };
 }

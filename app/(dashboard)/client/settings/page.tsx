@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { SettingsForm } from "./settingsForm";
 import { Profile } from "@/components/admin/types";
 
 export default async function SettingsPage() {
@@ -44,7 +43,6 @@ export default async function SettingsPage() {
       </div>
 
       {/* Le pasamos el perfil de la base de datos al formulario interactivo */}
-      <SettingsForm profile={profile as Profile} />
     </div>
   );
 }
