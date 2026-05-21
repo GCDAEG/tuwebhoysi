@@ -28,10 +28,12 @@ export async function login(formData: FormData) {
     } = await supabase.auth.getUser();
     const role = user?.app_metadata?.role;
 
+    
+
     if (role === 'admin') redirect('/admin/dashboard');
     if (role === 'client') redirect('/client/dashboard');
-    redirect('/account');
-  
+    
+    
   
 }
 

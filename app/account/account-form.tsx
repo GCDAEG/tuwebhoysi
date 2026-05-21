@@ -131,9 +131,7 @@ export default function AccountForm({ claims }: { claims: Claims | null }) {
           </p>
 
           <div>
-            <label className="block text-sm font-medium">
-              WhatsApp (Número)
-            </label>
+            <label className="block text-sm font-medium">WhatsApp</label>
             <input
               type="text"
               value={profile.whatsapp_number}
