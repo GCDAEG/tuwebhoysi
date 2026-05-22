@@ -39,7 +39,7 @@ export async function GET(
       id: profile.id,
       name: profile.full_name,
       username: profile.username,
-      logo: profile.avatar_url,
+      logo: profile.logo_url,
       banner: profile.banner_url,
       whatsapp: profile.whatsapp,
       instagram: profile.instagram_url,
