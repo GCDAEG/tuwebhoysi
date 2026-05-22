@@ -1,33 +1,27 @@
-// lib/supabase/public.ts
-import { Profile } from "@/components/admin/types";
-import { createClient } from "@/lib/supabase/server"; 
-import { ProductPublic } from "@/types/catalog";
+// lib/public/public.ts
+import { createClient } from "@supabase/supabase-js";
+import { ProductPublic } from "@/types/catalog"; // Asegurate de que esta ruta sea la tuya
 
-interface PublicStoreData {
-  store: Profile;
-  products: ProductPublic[];
-}
+// Inicializamos un cliente puro y sin cookies para lecturas públicas rápidas
+const supabasePublic = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+);
 
-/**
- * Obtiene los datos públicos de una tienda y sus productos activos usando el username/slug
- */
-export async function getPublicStoreData(slug: string): Promise<PublicStoreData | null> {
-  const supabase = await createClient();
-
-  // 1. Buscamos el perfil usando .maybeSingle() para evitar el error PGRST116 si no existe 🛡️
-  const { data: store, error: storeError } = await supabase
+export async function getPublicStoreData(slug: string) {
+  // 1. Buscamos el perfil usando el slug exacto
+  const { data: store, error: storeError } = await supabasePublic
     .from("profiles")
     .select("*")
     .eq("username", slug)
     .maybeSingle();
 
   if (storeError || !store) {
-    console.error(`Tienda no encontrada para el slug: ${slug}`, storeError);
     return null;
   }
 
-  // 2. Traemos SOLO los productos disponibles con el JOIN de categorías
-  const { data: products, error: productsError } = await supabase
+  // 2. Traemos SOLO los productos disponibles con sus categorías
+  const { data: products, error: productsError } = await supabasePublic
     .from("products")
     .select(`
       id,
@@ -45,21 +39,20 @@ export async function getPublicStoreData(slug: string): Promise<PublicStoreData 
     .eq("is_available", true);
 
   if (productsError || !products) {
-    console.error("Error al traer productos públicos:", productsError);
     return null;
   }
 
-  // 3. Mapeamos la data para que el e-commerce externo reciba la categoría directo como un texto chato
+  // 3. Aplanamos la categoría para que el front-end la consuma fácil
   const formattedProducts = products.map((p: any) => {
     const { categories, ...rest } = p;
     return {
       ...rest,
-      category: categories?.name || "Sin categoría" // 👈 Así el frontend hace p.category directo y listo
+      category: categories?.name || "Sin categoría"
     };
   });
 
   return {
-    store: store as Profile,
+    store,
     products: formattedProducts as unknown as ProductPublic[],
   };
 }
