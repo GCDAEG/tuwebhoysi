@@ -20,7 +20,7 @@ export async function getClientStoreContent() {
     .single();
 
   if (error) {
-    console.error("Error al traer contenido de tienda:", error);
+    console.error("Error al traer contenido de tiendda:", error);
     return null;
   }
 
