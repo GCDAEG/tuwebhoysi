@@ -56,3 +56,29 @@ export async function getPublicStoreData(slug: string) {
     products: formattedProducts as unknown as ProductPublic[],
   };
 }
+export async function getPublicProfileData(id: string) {
+  // 1. Buscamos el perfil usando el slug exacto
+  const { data: profile, error } = await supabasePublic
+        .from("profiles")
+        .select(`
+          id,
+          full_name,
+          username,
+          logo_url,
+          banner_url,
+          whatsapp,
+          instagram_url,
+          facebook_url,
+          website,
+          welcome_message,
+          catalog
+        `)
+        .eq("id", id)
+        .maybeSingle();
+
+        console.log("Perfil público encontrado:", profile, error);
+        if (error || !profile) {
+          return null;
+        }
+  return profile;
+}

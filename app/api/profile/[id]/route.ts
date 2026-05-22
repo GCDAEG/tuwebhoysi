@@ -1,4 +1,5 @@
 // app/api/profile/[id]/route.ts
+import { getPublicProfileData } from "@/lib/public/public";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
@@ -24,25 +25,9 @@ export async function GET(
     const { id } = await params;
 
     // Consultamos la base de datos usando .maybeSingle() por seguridad
-    const { data: profile, error } = await supabasePublic
-      .from("profiles")
-      .select(`
-        id,
-        full_name,
-        username,
-        avatar_url,
-        banner_url,
-        whatsapp,
-        instagram_url,
-        facebook_url,
-        website,
-        welcome_message,
-        catalog
-      `)
-      .eq("id", id)
-      .maybeSingle();
+    const profile = await getPublicProfileData(id)
 
-    if (error || !profile) {
+    if ( !profile) {
       return NextResponse.json(
         { error: "Perfil no encontrado" },
         { status: 404, headers: corsHeaders }
