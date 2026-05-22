@@ -33,7 +33,7 @@ export async function GET(
       },
       products: data.products, // El array de productos con is_available: true
     });
-
+    console.log("Respuesta de la API de catálogo público:", await response.clone().json());
     // 4. Habilitamos CORS para que la web externa del cliente pueda hacer el fetch sin problemas
     response.headers.set("Access-Control-Allow-Origin", "*");
     response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
