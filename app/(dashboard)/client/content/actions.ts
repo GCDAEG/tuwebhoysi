@@ -15,7 +15,7 @@ export async function getClientStoreContent() {
   // Traemos los campos correspondientes al contenido de la tienda
   const { data, error } = await supabase
     .from("profiles")
-    .select("username, welcome_message, avatar_url, banner_url")
+    .select("full_name, welcome_message, logo_url, banner_url")
     .eq("id", user.id)
     .single();
 
@@ -25,9 +25,9 @@ export async function getClientStoreContent() {
   }
 
   return {
-    business_name: data.username || "",
+    business_name: data.full_name || "",
     welcome_message: data.welcome_message || "",
-    logo_url: data.avatar_url || "",
+    logo_url: data.logo_url || "",
     banner_url: data.banner_url || "",
   };
 }
@@ -45,7 +45,7 @@ export async function updateClientStoreContent(data: StoreContentFormValues) {
   const { error } = await supabase
     .from("profiles")
     .update({
-      name: validated.business_name, // Mapea a la columna name de tu tabla profiles
+      full_name: validated.business_name, // Mapea a la columna name de tu tabla profiles
       welcome_message: validated.welcome_message || null,
       logo_url: validated.logo_url || null,
       banner_url: validated.banner_url || null,
