@@ -7,13 +7,14 @@ import {
   Image as ImageIcon,
   Save,
   ArrowLeft,
-  Link as LinkIcon,
   Trash2,
-  FolderTree, // 👈 Agregamos el ícono
+  UploadCloud, // 👈 Nuevo ícono para subir
+  Loader2, // 👈 Ícono de carga
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import imageCompression from "browser-image-compression";
+import { createClient } from "@/lib/supabase/client"; // Tu cliente de frontend
 import { createProduct, updateProduct, deleteProduct } from "../actions";
 import { productSchema, ProductFormValues } from "@/lib/zod/schemas";
 import { Product } from "@/types/catalog";
@@ -29,12 +30,16 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
 
+  // 🚀 Nuevo estado para bloquear la UI mientras comprime y sube
+  const [isUploading, setIsUploading] = React.useState(false);
+
   const isEditMode = !!initialData;
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue, // 👈 Clave para inyectar la URL devuelta por Supabase
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema) as Resolver<ProductFormValues>,
@@ -47,11 +52,60 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
       image_url: initialData?.image_url || "",
     },
   });
+
   const watchImageUrl = watch("image_url");
 
   React.useEffect(() => {
     setImageError(false);
   }, [watchImageUrl]);
+
+  // 📸 FUNCIÓN MÁGICA: Comprime y sube a Supabase
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      // 1. Compresión en el celular
+      const options = {
+        maxSizeMB: 0.2, // 200 KB max
+        maxWidthOrHeight: 1080,
+        useWebWorker: true,
+        fileType: "image/webp",
+      };
+      const compressedFile = await imageCompression(file, options);
+
+      // 2. Subida a Supabase
+      const supabase = createClient();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`;
+      const filePath = `productos/${fileName}`;
+
+      const { error } = await supabase.storage
+        // Asegurate de que el bucket se llame "tuwebhoy-assets" o cambialo acá
+        .from("tuwebhoy-assets")
+        .upload(filePath, compressedFile, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) throw error;
+
+      // 3. Obtener URL pública
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("tuwebhoy-assets").getPublicUrl(filePath);
+
+      // 4. Inyectamos la URL en el formulario
+      setValue("image_url", publicUrl, { shouldValidate: true });
+    } catch (error) {
+      console.error("Error subiendo imagen:", error);
+      alert("Hubo un error al procesar la imagen. Intentá de nuevo.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const onSubmit = (data: ProductFormValues) => {
     startTransition(async () => {
@@ -92,7 +146,6 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
       onSubmit={handleSubmit(onSubmit)}
       className="mx-auto max-w-3xl space-y-6"
     >
-      {/* Header del Formulario con botones de navegación */}
       <div className="flex items-center justify-between">
         <Link
           href="/client/catalog"
@@ -100,21 +153,18 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
         >
           <ArrowLeft className="size-4" /> Volver al catálogo
         </Link>
-
-        {/* Botón rápido para ir a categorías 🚀
-        <Link
-          href="/client/catalog/categories"
-          className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-lg"
-        >
-          <FolderTree className="size-3.5" /> Gestionar Categorías
-        </Link> */}
       </div>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        {/* Columna Izquierda: Vista Previa */}
+        {/* COLUMNA IZQUIERDA: Imagen y Botón de Subida */}
         <div className="md:col-span-1 space-y-4">
           <div className="aspect-square w-full overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-zinc-900/50 flex flex-col items-center justify-center text-zinc-400 relative">
-            {watchImageUrl && !imageError ? (
+            {isUploading ? (
+              <div className="flex flex-col items-center gap-2 text-blue-500">
+                <Loader2 className="size-8 animate-spin" />
+                <span className="text-xs font-bold">Optimizando...</span>
+              </div>
+            ) : watchImageUrl && !imageError ? (
               <img
                 src={watchImageUrl}
                 alt="Vista previa"
@@ -125,31 +175,41 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
               <>
                 <ImageIcon className="mb-2 size-10 opacity-20" />
                 <span className="text-xs font-medium px-4 text-center">
-                  {imageError
-                    ? "URL de imagen inválida"
-                    : "Vista previa de la imagen"}
+                  {imageError ? "Error al cargar" : "Sin imagen"}
                 </span>
               </>
             )}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-              <LinkIcon className="size-4 text-zinc-500" /> URL de la Imagen
+          {/* Botón nativo para Celular / PC */}
+          <div className="space-y-2 relative">
+            <label
+              htmlFor="file-upload"
+              className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-blue-300 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 ${isUploading ? "opacity-50 pointer-events-none" : ""}`}
+            >
+              <UploadCloud className="size-5" />
+              {watchImageUrl ? "Cambiar foto" : "Subir foto"}
             </label>
             <input
-              {...register("image_url")}
-              type="url"
-              className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 dark:border-white/10 dark:text-white"
-              placeholder="https://ejemplo.com/foto.jpg"
+              id="file-upload"
+              type="file"
+              accept="image/png, image/jpeg, image/webp"
+              className="hidden"
+              onChange={handleImageUpload}
+              disabled={isUploading}
             />
+            {/* Input oculto para que react-hook-form siga validando */}
+            <input type="hidden" {...register("image_url")} />
+
             {errors.image_url && (
-              <p className="text-xs text-red-500">{errors.image_url.message}</p>
+              <p className="text-xs text-red-500 text-center">
+                {errors.image_url.message}
+              </p>
             )}
           </div>
         </div>
 
-        {/* Columna Derecha: Campos */}
+        {/* COLUMNA DERECHA: Resto de los campos (Sin cambios) */}
         <div className="md:col-span-2 space-y-6 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-950">
           <h2 className="text-lg font-bold text-zinc-900 dark:text-white border-b border-zinc-100 dark:border-white/10 pb-3">
             {isEditMode ? "Modificar Producto" : "Detalles del Producto"}
@@ -240,24 +300,24 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
         </div>
       </div>
 
-      {/* Botones de acción del Footer */}
+      {/* FOOTER */}
       <div className="flex justify-between items-center pt-4">
         <div>
           {isEditMode && (
             <button
               type="button"
-              disabled={isDeleting}
+              disabled={isDeleting || isUploading}
               onClick={handleDelete}
               className="flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-600 border border-red-200 px-4 py-3 text-sm font-medium hover:bg-red-100 transition-all shadow-sm disabled:opacity-50 dark:bg-red-950/20 dark:text-red-400 dark:border-red-500/20"
             >
-              <Trash2 className="size-4" /> Eliminar Producto
+              <Trash2 className="size-4" /> Eliminar
             </button>
           )}
         </div>
 
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || isUploading}
           className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-3 text-sm font-medium text-white hover:bg-blue-700 transition-all shadow-sm disabled:opacity-50"
         >
           {isPending ? (
