@@ -33,7 +33,7 @@ export default async function EditProductPage({
   }
 
   return (
-    <div className="p-6">
+    <div className="">
       <div className="mb-6 flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
           Editar Producto

@@ -8,7 +8,7 @@ export default async function NewProductPage() {
   const categories = await getClientCategories();
 
   return (
-    <div className="p-6">
+    <div className="">
       {/* Header con título y botón de acción */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-col gap-1">
