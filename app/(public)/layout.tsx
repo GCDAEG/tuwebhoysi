@@ -1,4 +1,5 @@
 import { LenisProvider } from "@/components/providers/LenisProvider";
+import { Footer } from "@/components/public/Footer";
 import { Nav } from "@/components/public/Nav/Nav";
 import React from "react";
 
@@ -17,9 +18,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <main>{children}</main>
 
         {/* Footer */}
-        <footer>
-          <p>&copy; 2023 My Site</p>
-        </footer>
+        <Footer></Footer>
       </LenisProvider>
     </div>
   );

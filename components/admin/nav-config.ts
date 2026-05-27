@@ -35,6 +35,7 @@ const adminSections: NavSection[] = [
       { href: "/admin/revenue", label: "Ingresos", icon: Wallet },
       { href: "/admin/stats", label: "Estadísticas generales", icon: BarChart3 },
       { href: "/admin/websites", label: "Todas las webs", icon: Globe },
+      { href: "/admin/demos", label: "Demos", icon: Globe },
     ],
   },
   {
