@@ -76,8 +76,7 @@ export function Nav() {
             onClick={handleLogoClick}
             className="flex shrink-0 items-center gap-0.5 font-heading text-lg font-bold tracking-tight text-white transition-opacity hover:opacity-90"
           >
-            TUWEB
-            <span className="text-blue-500">HOY</span>
+            <img src="/twhlogo.svg" alt="TUWEBHOY" className="h-8 w-32" />
           </Link>
 
           <DesktopMenu

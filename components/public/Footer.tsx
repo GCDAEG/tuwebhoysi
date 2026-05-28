@@ -8,15 +8,16 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-zinc-200 bg-white dark:border-white/5 dark:bg-zinc-950">
+    <footer className="border-t border-zinc-200 bg-zinc-100 dark:border-white/5 dark:bg-zinc-950">
       <div className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-4 lg:gap-8">
           {/* 1. Columna de Marca (Ocupa 2 espacios en desktop) */}
           <div className="md:col-span-2 space-y-4">
-            <Link href="/" className="inline-block">
-              <span className="text-xl font-black tracking-tight text-zinc-900 dark:text-white">
-                TUWEBHOY
-              </span>
+            <Link
+              href="/"
+              className="flex shrink-0 items-center gap-0.5 font-heading text-lg font-bold tracking-tight text-white transition-opacity hover:opacity-90"
+            >
+              <img src="/twhlogo.svg" alt="TUWEBHOY" className="h-8 w-32" />
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
               Transformando la manera en que los comercios locales venden.

@@ -4,19 +4,13 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Link2,
-  Image as ImageIcon,
-  FolderHeart,
-  Save,
-  ArrowLeft,
-  Globe,
-} from "lucide-react";
+import { Image as ImageIcon, Save, ArrowLeft, Globe } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { createDemo, updateDemo } from "@/app/(admin)/admin/demos/actions";
 
-// Esquema de validación con Zod
+// 👈 Importamos las Server Actions en lugar del cliente de Supabase
+
 const demoSchema = z.object({
   name: z
     .string()
@@ -35,10 +29,23 @@ const demoSchema = z.object({
 
 type DemoFormValues = z.infer<typeof demoSchema>;
 
-export function DemoForm() {
+export interface DemoFormProps {
+  initialData?: {
+    id: string;
+    name: string;
+    slug: string;
+    category: string;
+    image_url: string;
+    demo_url: string;
+  };
+}
+
+export function DemoForm({ initialData }: DemoFormProps) {
   const router = useRouter();
   const [isPending, setIsPending] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
+
+  const isEditMode = !!initialData;
 
   const {
     register,
@@ -48,11 +55,11 @@ export function DemoForm() {
   } = useForm<DemoFormValues>({
     resolver: zodResolver(demoSchema),
     defaultValues: {
-      name: "",
-      slug: "",
-      category: "",
-      image_url: "",
-      demo_url: "",
+      name: initialData?.name || "",
+      slug: initialData?.slug || "",
+      category: initialData?.category || "",
+      image_url: initialData?.image_url || "",
+      demo_url: initialData?.demo_url || "",
     },
   });
 
@@ -65,23 +72,26 @@ export function DemoForm() {
   const onSubmit = async (data: DemoFormValues) => {
     setIsPending(true);
     try {
-      const supabase = createClient();
+      // 1. Preparamos los datos limpios
+      const formattedData = {
+        name: data.name,
+        slug: data.slug.toLowerCase().replace(/\s+/g, "-"),
+        category: data.category,
+        image_url: data.image_url,
+        demo_url: data.demo_url,
+      };
 
-      const { error } = await supabase.from("portfolio_demos").insert([
-        {
-          name: data.name,
-          slug: data.slug.toLowerCase().replace(/\s+/g, "-"), // Asegura formato slug
-          category: data.category,
-          image_url: data.image_url,
-          demo_url: data.demo_url,
-        },
-      ]);
+      // 2. Llamamos a la Server Action correspondiente
+      if (isEditMode && initialData) {
+        await updateDemo(initialData.id, formattedData);
+        alert("¡Demo actualizada con éxito!");
+      } else {
+        await createDemo(formattedData);
+        alert("¡Demo del portafolio creada con éxito!");
+      }
 
-      if (error) throw error;
-
-      alert("¡Demo del portafolio creada con éxito!");
-      router.push("/admin/demos"); // O la ruta de tu lista de demos
-      router.refresh();
+      // 3. Volvemos al panel (la caché ya se limpió por revalidatePath)
+      router.push("/admin/demos");
     } catch (error: any) {
       console.error(error);
       alert("Hubo un error al guardar la demo: " + error.message);
@@ -95,20 +105,19 @@ export function DemoForm() {
       onSubmit={handleSubmit(onSubmit)}
       className="mx-auto max-w-3xl space-y-6"
     >
-      {/* Botón de retorno */}
       <div className="flex items-center justify-between">
         <Link
-          href="/client/dashboard" // Ajustalo a tu ruta de navegación
-          className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+          href="/admin/demos"
+          className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-900 transition-colors dark:hover:text-white"
         >
-          <ArrowLeft className="size-4" /> Volver al panel
+          <ArrowLeft className="size-4" /> Volver a Demos
         </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        {/* Vista previa de la imagen externa */}
+        {/* Columna Izquierda: Vista Previa */}
         <div className="md:col-span-1 space-y-4">
-          <div className="aspect-[4/3] w-full overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-zinc-900/50 flex flex-col items-center justify-center text-zinc-400 relative">
+          <div className="relative flex aspect-[4/3] w-full flex-col items-center justify-center overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-white/10 dark:bg-zinc-900/50">
             {watchImageUrl && !imageError ? (
               <img
                 src={watchImageUrl}
@@ -119,7 +128,7 @@ export function DemoForm() {
             ) : (
               <>
                 <ImageIcon className="mb-2 size-10 opacity-20" />
-                <span className="text-xs font-medium px-4 text-center">
+                <span className="px-4 text-center text-xs font-medium">
                   {imageError
                     ? "URL de imagen rota o inválida"
                     : "Vista previa del enlace"}
@@ -127,21 +136,22 @@ export function DemoForm() {
               </>
             )}
           </div>
-          <p className="text-[11px] text-zinc-500 text-center leading-relaxed">
+          <p className="text-center text-[11px] leading-relaxed text-zinc-500">
             Subí tu imagen a Postimages y pegá el{" "}
             <b>&quot;Enlace directo&quot;</b> (debe terminar en .jpg, .png o
             .webp).
           </p>
         </div>
 
-        {/* Campos del Formulario */}
-        <div className="md:col-span-2 space-y-6 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-950">
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-white border-b border-zinc-100 dark:border-white/10 pb-3">
-            Nueva Demo para la Landing
+        {/* Columna Derecha: Campos del Formulario */}
+        <div className="space-y-6 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm md:col-span-2 dark:border-white/10 dark:bg-zinc-950">
+          <h2 className="border-b border-zinc-100 pb-3 text-lg font-bold text-zinc-900 dark:border-white/10 dark:text-white">
+            {isEditMode
+              ? "Editar Demo Existente"
+              : "Nueva Demo para la Landing"}
           </h2>
 
           <div className="space-y-4">
-            {/* Nombre comercial */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Nombre de la Demo</label>
               <input
@@ -155,7 +165,6 @@ export function DemoForm() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Identificador URL */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Slug (Filtro URL)</label>
                 <input
@@ -168,12 +177,11 @@ export function DemoForm() {
                 )}
               </div>
 
-              {/* Selector de Rubros */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Rubro / Categoría</label>
                 <select
                   {...register("category")}
-                  className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-3 text-sm dark:border-white/10 dark:text-white dark:bg-zinc-950"
+                  className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-3 text-sm dark:border-white/10 dark:bg-zinc-950 dark:text-white"
                 >
                   <option value="">-- Seleccioná --</option>
                   <option value="Gastronomía">Gastronomía</option>
@@ -189,9 +197,8 @@ export function DemoForm() {
               </div>
             </div>
 
-            {/* URL Enlace de la Imagen Externa */}
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
+              <label className="flex items-center gap-2 text-sm font-medium">
                 <ImageIcon className="size-4 text-zinc-400" /> Enlace de la
                 Imagen (Postimages)
               </label>
@@ -208,9 +215,8 @@ export function DemoForm() {
               )}
             </div>
 
-            {/* URL Destino del catálogo vivo */}
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
+              <label className="flex items-center gap-2 text-sm font-medium">
                 <Globe className="size-4 text-zinc-400" /> URL del Catálogo
                 Activo
               </label>
@@ -230,18 +236,18 @@ export function DemoForm() {
         </div>
       </div>
 
-      {/* Botón Guardar */}
       <div className="flex justify-end pt-4">
         <button
           type="submit"
           disabled={isPending}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-3 text-sm font-medium text-white hover:bg-blue-700 transition-all shadow-sm disabled:opacity-50"
+          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-50"
         >
           {isPending ? (
             <div className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
           ) : (
             <>
-              <Save className="size-4" /> Publicar en Portafolio
+              <Save className="size-4" />
+              {isEditMode ? "Guardar Cambios" : "Publicar en Portafolio"}
             </>
           )}
         </button>
