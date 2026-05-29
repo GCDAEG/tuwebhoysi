@@ -37,18 +37,29 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://tuwebhoysi.com.ar"),
 
   title: {
-    default: "TUWEBHOY | Catálogos Digitales para WhatsApp 🚀",
+    default: "TUWEBHOY | Páginas web que sirven",
     template: "%s | TUWEBHOY",
   },
 
   description:
-    "Digitalizá tu menú o catálogo de productos. Recibí pedidos organizados directo en tu WhatsApp. Sin comisiones, rápido y autogestionable.",
+    "Digitalizá tu emprendimiento. Recibí pedidos organizados directo en tu WhatsApp. Sin comisiones, rápido y autogestionable.",
 
   keywords: [
     "catálogo digital",
     "pedidos por whatsapp",
     "menú online",
     "ecommerce para pizzerías",
+    "Gualeguaychú",
+    "ventas online",
+    "portfolio",
+    "diseño web",
+    "desarrollo web",
+    "agencia web",
+    "catálogo interactivo",
+    "digitalización de comercios",
+    "ventas por whatsapp",
+    "menú digital",
+    "ecommerce para restaurantes",
     "Gualeguaychú",
     "ventas online",
   ],
@@ -73,9 +84,9 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "TUWEBHOY | Catálogos que venden",
+    title: "TUWEBHOY | Páginas web que sirven",
     description:
-      "Digitalizá tu comercio hoy mismo. La forma más fácil de vender por WhatsApp.",
+      "Digitalizá tu emprendimiento. La forma más fácil de vender por WhatsApp.",
     images: ["/og-image.png"],
   },
 
