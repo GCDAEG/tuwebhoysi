@@ -33,24 +33,38 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Define la URL base de tu sitio para que las imágenes se carguen correctamente
+  metadataBase: new URL("https://tuwebhoysi.com.ar"),
+
   title: {
-    default: "Tu Web Hoy",
-    template: "%s | Tu Web Hoy",
+    default: "TUWEBHOY | Catálogos Digitales para WhatsApp 🚀",
+    template: "%s | TUWEBHOY",
   },
 
   description:
-    "Creamos páginas web simples y modernas para emprendedores. Ideales para mostrar tu negocio y empezar a vender.",
+    "Digitalizá tu menú o catálogo de productos. Recibí pedidos organizados directo en tu WhatsApp. Sin comisiones, rápido y autogestionable.",
+
+  keywords: [
+    "catálogo digital",
+    "pedidos por whatsapp",
+    "menú online",
+    "ecommerce para pizzerías",
+    "Gualeguaychú",
+    "ventas online",
+  ],
 
   openGraph: {
-    title: "Tu web lista en días 🚀",
+    title: "Tu negocio en el celular de tus clientes 📲",
     description:
-      "Páginas web modernas, claras y accesibles. Ideal para emprendedores y negocios chicos.",
+      "Transformá tu lista de precios en un catálogo interactivo. Pedidos automáticos a tu WhatsApp sin vueltas.",
+    url: "https://tuwebhoysi.com.ar",
+    siteName: "TUWEBHOY",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.png", // Debes tener este archivo en tu carpeta /public
         width: 1200,
         height: 630,
-        alt: "Tu Web Hoy - Páginas web listas en días",
+        alt: "Vista previa de catálogos digitales TUWEBHOY",
       },
     ],
     type: "website",
@@ -59,11 +73,14 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "Tu web lista en días",
+    title: "TUWEBHOY | Catálogos que venden",
     description:
-      "Webs modernas y accesibles para emprendedores. Lista para compartir y vender.",
+      "Digitalizá tu comercio hoy mismo. La forma más fácil de vender por WhatsApp.",
     images: ["/og-image.png"],
   },
+
+  // Esto ayuda a que el color de la barra del navegador en el celular combine con tu marca
+  themeColor: "#2563eb",
 };
 
 export default async function RootLayout({
